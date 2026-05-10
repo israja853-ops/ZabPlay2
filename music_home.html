@@ -31,7 +31,7 @@
         
         .music-thumb { width: 55px; height: 55px; border-radius: 8px; object-fit: cover; background: #222; }
         .music-info { flex: 1; }
-        .music-info h3 { margin: 0; font-size: 16px; font-weight: 500; color: #fff; }
+        .music-info h3 { margin: 0; font-size: 16px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
         .music-info p { margin: 3px 0 0; font-size: 13px; color: #888; }
         
         .more-icon { color: #888; padding: 10px; cursor: pointer; }
@@ -63,7 +63,7 @@
             position: fixed; bottom: 90px; right: 20px; 
             width: 55px; height: 55px; background: var(--main-red); 
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 15px rgba(255,0,51,0.4); font-size: 24px;
+            box-shadow: 0 4px 15px rgba(255,0,51,0.4); font-size: 24px; z-index: 99;
         }
     </style>
 </head>
@@ -118,7 +118,6 @@
                     card.className = 'music-card';
                     card.id = `song-${index}`;
                     
-                    // रैंडम इमेज (क्योंकि ब्राउज़र सीधे ऑडियो फाइल से इमेज नहीं निकाल सकता)
                     const thumbUrl = `https://picsum.photos/100/100?random=${Math.random()}`;
                     
                     card.innerHTML = `
@@ -135,12 +134,16 @@
                         </div>
                     `;
 
-                    // Long Press Logic
                     let timer;
                     card.addEventListener('touchstart', () => {
                         timer = setTimeout(() => enterSelectionMode(card), 800);
                     });
                     card.addEventListener('touchend', () => clearTimeout(timer));
+                    
+                    // Selection Mode में टैप करने के लिए
+                    card.addEventListener('click', () => {
+                        if(isSelectionMode) toggleSelect(card);
+                    });
 
                     container.appendChild(card);
                 });
@@ -148,10 +151,11 @@
             input.click();
         }
 
+        // --- NAVIGATION FIX HERE ---
         function playSong(title) {
             if(isSelectionMode) return;
-            alert("Playing: " + title); 
-            // यहाँ आप music_player.html पर डेटा भेज सकते हैं
+            // यह लाइन अब गाने के नाम के साथ प्लेयर पेज खोलेगी
+            window.location.href = "music_player.html?name=" + encodeURIComponent(title);
         }
 
         function toggleMenu(e, id) {
@@ -165,7 +169,6 @@
             document.querySelectorAll('.action-menu').forEach(m => m.style.display = 'none');
         });
 
-        // Selection Functions
         function enterSelectionMode(el) {
             isSelectionMode = true;
             document.getElementById('normal-header').style.display = 'none';
@@ -199,7 +202,7 @@
         }
 
         function shareMusic() {
-            alert("Opening Share Menu (Bluetooth/Apps)...");
+            alert("Opening Share Menu...");
         }
     </script>
 </body>
