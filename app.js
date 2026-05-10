@@ -1,126 +1,57 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Navigation & Page Management
-    const navItems = document.querySelectorAll('.nav-item');
-    const pages = document.querySelectorAll('.page');
-    const videoPlayerScreen = document.getElementById('video-player-screen');
-    const musicPlayerScreen = document.getElementById('music-player-screen');
-    const mainVideo = document.getElementById('main-video');
+// 1. Tab Switching Logic
+function switchTab(pageId, element) {
+    document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    element.classList.add('active');
+}
 
-    navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const targetId = item.getAttribute('data-target');
-            
-            // UI Switch
-            navItems.forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-
-            // Page Switch (Fixing Music Page Visibility)
-            pages.forEach(p => {
-                p.classList.remove('active');
-                p.style.display = 'none'; 
-            });
-
-            const activePage = document.getElementById(targetId);
-            activePage.classList.add('active');
-            activePage.style.display = 'block';
-        });
-    });
-
-    // 2. Real Gallery Integration (Video/Music)
-    window.selectFromGallery = () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'video/*, audio/*';
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            const fileUrl = URL.createObjectURL(file);
-            
-            if (file.type.includes('video')) {
-                startVideoPlayer(fileUrl, file.name);
-            } else {
-                startMusicPlayer(fileUrl, file.name);
-            }
-        };
-        input.click();
-    };
-
-    function startVideoPlayer(src, name) {
-        mainVideo.src = src;
-        videoPlayerScreen.style.display = 'flex';
-        videoPlayerScreen.classList.add('active');
-        mainVideo.play();
-        
-        // Player के नीचे नाम अपडेट करना (Like your Photo)
-        document.getElementById('player-bottom-list').innerHTML = `
-            <div class="video-item" style="padding:15px; border-left: 4px solid #ff0033; background: #1a1a1a;">
-                <div class="video-info">
-                    <h3 style="color:#ff0033">Now Playing: ${name}</h3>
-                    <p style="color:gray; font-size:12px;">ZabPlay Premium Player</p>
-                </div>
-            </div>
-        `;
-        showControls();
-    }
-
-    // 3. Advanced Video Controls
-    const controlsOverlay = document.getElementById('video-controls');
-    const playPauseBtn = document.getElementById('play-pause');
-    const muteBtn = document.getElementById('mute-btn');
-    const lockBtn = document.getElementById('lock-btn');
-    let isLocked = false;
-    let controlTimer;
-
-    const showControls = () => {
-        if (isLocked && !event.target.closest('#lock-btn')) return;
-        controlsOverlay.style.opacity = '1';
-        clearTimeout(controlTimer);
-        controlTimer = setTimeout(() => {
-            if (!mainVideo.paused) controlsOverlay.style.opacity = '0';
-        }, 3000);
-    };
-
-    videoPlayerScreen.addEventListener('click', showControls);
-
-    playPauseBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (isLocked) return;
-        if (mainVideo.paused) {
-            mainVideo.play();
-            playPauseBtn.className = 'fas fa-pause';
+// 2. Real Gallery Access
+function selectFromGallery() {
+    const picker = document.createElement('input');
+    picker.type = 'file';
+    picker.accept = 'video/*, audio/*';
+    picker.onchange = e => {
+        const file = e.target.files[0];
+        const url = URL.createObjectURL(file);
+        if (file.type.startsWith('video')) {
+            openVideoPlayer(url, file.name);
         } else {
-            mainVideo.pause();
-            playPauseBtn.className = 'fas fa-play';
+            openMusicPlayer(url, file.name);
         }
     };
+    picker.click();
+}
 
-    muteBtn.onclick = (e) => {
-        e.stopPropagation();
-        mainVideo.muted = !mainVideo.muted;
-        muteBtn.className = mainVideo.muted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
-    };
+// 3. Open Video Player (Page 3)
+function openVideoPlayer(url, name) {
+    const player = document.getElementById('player-video-full');
+    const v = document.getElementById('main-v-element');
+    v.src = url;
+    player.style.display = 'flex';
+    v.play();
+    // Suggested list update logic here
+}
 
-    lockBtn.onclick = (e) => {
-        e.stopPropagation();
-        isLocked = !isLocked;
-        lockBtn.innerHTML = isLocked ? '<i class="fas fa-lock"></i>' : '<i class="fas fa-unlock"></i>';
-        controlsOverlay.classList.toggle('locked-mode', isLocked);
-    };
+// 4. Open Music Player (Page 4)
+function openMusicPlayer(url, name) {
+    const player = document.getElementById('player-music-full');
+    document.getElementById('m-title-text').innerText = name;
+    player.style.display = 'flex';
+    // Audio play logic here
+}
 
-    // 4. Music Player Logic
-    function startMusicPlayer(src, name) {
-        musicPlayerScreen.style.display = 'flex';
-        musicPlayerScreen.classList.add('active');
-        document.getElementById('song-title').innerText = name;
-        // यहाँ म्यूजिक प्ले करने का अलग ऑडियो टैग भी लगा सकते हैं
-    }
+// Close All Players
+function closePlayers() {
+    document.querySelectorAll('.full-screen-player').forEach(p => p.style.display = 'none');
+    document.getElementById('main-v-element').pause();
+}
 
-    document.getElementById('close-player').onclick = () => {
-        videoPlayerScreen.style.display = 'none';
-        mainVideo.pause();
-    };
-
-    document.getElementById('close-music').onclick = () => {
-        musicPlayerScreen.style.display = 'none';
-    };
-});
-
+// 3 Second Auto-Hide for Video Controls
+let timer;
+function handleVideoTouch() {
+    const overlay = document.querySelector('.v-overlay');
+    overlay.style.opacity = '1';
+    clearTimeout(timer);
+    timer = setTimeout(() => { overlay.style.opacity = '0'; }, 3000);
+}
