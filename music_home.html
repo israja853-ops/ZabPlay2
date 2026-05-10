@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZabPlay - Music Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --main-red: #ff0033; --dark-bg: #000; --card-bg: #121212; }
+        body { margin: 0; background: var(--dark-bg); color: white; font-family: sans-serif; }
+
+        /* Header */
+        .header { 
+            padding: 20px; display: flex; justify-content: space-between; align-items: center; 
+            position: sticky; top: 0; background: var(--dark-bg); z-index: 100;
+        }
+        .header h1 { font-size: 24px; margin: 0; color: white; }
+        .selection-header {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 70px;
+            background: #1a1a1a; justify-content: space-between; align-items: center;
+            padding: 0 20px; box-sizing: border-box; z-index: 200;
+        }
+
+        /* Music List */
+        .music-list { padding: 10px 15px; padding-bottom: 80px; }
+        .music-card { 
+            display: flex; align-items: center; gap: 15px; margin-bottom: 15px; 
+            padding: 8px; border-radius: 10px; transition: 0.2s; position: relative;
+        }
+        .music-card.selected { background: rgba(255, 0, 51, 0.2); }
+        
+        .music-thumb { width: 55px; height: 55px; border-radius: 8px; object-fit: cover; background: #222; }
+        .music-info { flex: 1; }
+        .music-info h3 { margin: 0; font-size: 16px; font-weight: 500; color: #fff; }
+        .music-info p { margin: 3px 0 0; font-size: 13px; color: #888; }
+        
+        .more-icon { color: #888; padding: 10px; cursor: pointer; }
+
+        /* Action Menu (3 Dots) */
+        .action-menu {
+            position: absolute; right: 40px; background: #222; border-radius: 8px;
+            display: none; flex-direction: column; z-index: 10; overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .action-menu button {
+            background: none; border: none; color: white; padding: 10px 20px;
+            text-align: left; cursor: pointer; border-bottom: 1px solid #333;
+        }
+        .action-menu button:last-child { border: none; }
+
+        /* Bottom Nav */
+        .bottom-nav { 
+            position: fixed; bottom: 0; width: 100%; height: 70px; 
+            background: #080808; display: flex; justify-content: space-around; 
+            align-items: center; border-top: 1px solid #222; 
+        }
+        .nav-item { text-align: center; color: #555; font-size: 11px; text-decoration: none; }
+        .nav-item.active { color: var(--main-red); }
+        .nav-item i { font-size: 22px; display: block; margin-bottom: 5px; }
+
+        /* Scan Button */
+        .scan-btn {
+            position: fixed; bottom: 90px; right: 20px; 
+            width: 55px; height: 55px; background: var(--main-red); 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 15px rgba(255,0,51,0.4); font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header" id="normal-header">
+        <h1>Music</h1>
+        <i class="fas fa-search" style="font-size: 20px;"></i>
+    </header>
+
+    <div class="selection-header" id="selection-header">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <i class="fas fa-times" onclick="exitSelection()"></i>
+            <span id="select-count">0 Selected</span>
+        </div>
+        <div>
+            <i class="fas fa-share-alt" style="margin-right:20px;" onclick="shareMusic()"></i>
+            <i class="fas fa-trash" onclick="deleteMusic()"></i>
+        </div>
+    </div>
+
+    <main class="music-list" id="music-container">
+        </main>
+
+    <div class="scan-btn" onclick="scanMusic()">
+        <i class="fas fa-plus"></i>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="video_home.html" class="nav-item">
+            <i class="fas fa-play-circle"></i><span>Videos</span>
+        </a>
+        <a href="music_home.html" class="nav-item active">
+            <i class="fas fa-music"></i><span>Music</span>
+        </a>
+    </nav>
+
+    <script>
+        let isSelectionMode = false;
+
+        function scanMusic() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'audio/*';
+            input.multiple = true;
+            input.onchange = e => {
+                const files = Array.from(e.target.files);
+                const container = document.getElementById('music-container');
+                
+                files.forEach((file, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'music-card';
+                    card.id = `song-${index}`;
+                    
+                    // रैंडम इमेज (क्योंकि ब्राउज़र सीधे ऑडियो फाइल से इमेज नहीं निकाल सकता)
+                    const thumbUrl = `https://picsum.photos/100/100?random=${Math.random()}`;
+                    
+                    card.innerHTML = `
+                        <img src="${thumbUrl}" class="music-thumb">
+                        <div class="music-info" onclick="playSong('${file.name}')">
+                            <h3>${file.name.replace(/\.[^/.]+$/, "")}</h3>
+                            <p>Local Artist</p>
+                        </div>
+                        <i class="fas fa-ellipsis-v more-icon" onclick="toggleMenu(event, ${index})"></i>
+                        <div class="action-menu" id="menu-${index}">
+                            <button onclick="playSong('${file.name}')"><i class="fas fa-play"></i> Play</button>
+                            <button onclick="shareMusic()"><i class="fas fa-share-alt"></i> Share</button>
+                            <button onclick="deleteSingle(${index})"><i class="fas fa-trash"></i> Delete</button>
+                        </div>
+                    `;
+
+                    // Long Press Logic
+                    let timer;
+                    card.addEventListener('touchstart', () => {
+                        timer = setTimeout(() => enterSelectionMode(card), 800);
+                    });
+                    card.addEventListener('touchend', () => clearTimeout(timer));
+
+                    container.appendChild(card);
+                });
+            };
+            input.click();
+        }
+
+        function playSong(title) {
+            if(isSelectionMode) return;
+            alert("Playing: " + title); 
+            // यहाँ आप music_player.html पर डेटा भेज सकते हैं
+        }
+
+        function toggleMenu(e, id) {
+            e.stopPropagation();
+            const menus = document.querySelectorAll('.action-menu');
+            menus.forEach(m => m.style.display = 'none');
+            document.getElementById(`menu-${id}`).style.display = 'flex';
+        }
+
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.action-menu').forEach(m => m.style.display = 'none');
+        });
+
+        // Selection Functions
+        function enterSelectionMode(el) {
+            isSelectionMode = true;
+            document.getElementById('normal-header').style.display = 'none';
+            document.getElementById('selection-header').style.display = 'flex';
+            toggleSelect(el);
+        }
+
+        function toggleSelect(el) {
+            el.classList.toggle('selected');
+            const selected = document.querySelectorAll('.music-card.selected').length;
+            document.getElementById('select-count').innerText = `${selected} Selected`;
+            if(selected === 0) exitSelection();
+        }
+
+        function exitSelection() {
+            isSelectionMode = false;
+            document.querySelectorAll('.music-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('normal-header').style.display = 'flex';
+            document.getElementById('selection-header').style.display = 'none';
+        }
+
+        function deleteSingle(id) {
+            if(confirm("Delete this song?")) document.getElementById(`song-${id}`).remove();
+        }
+
+        function deleteMusic() {
+            if(confirm("Delete selected songs?")) {
+                document.querySelectorAll('.music-card.selected').forEach(c => c.remove());
+                exitSelection();
+            }
+        }
+
+        function shareMusic() {
+            alert("Opening Share Menu (Bluetooth/Apps)...");
+        }
+    </script>
+</body>
+</html>
