@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZabPlay</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+
+    <header id="main-header">
+        <h1>ZabPlay</h1>
+        <div class="header-icons">
+            <i class="fas fa-search"></i>
+            <i class="fas fa-user-circle"></i>
+        </div>
+    </header>
+
+    <main id="app-content">
+        <section id="video-home" class="page active">
+            <div class="video-list" id="gallery-video-list">
+                <p class="status-msg">वीडियो लोड हो रहे हैं...</p>
+            </div>
+        </section>
+
+        <section id="music-home" class="page">
+            <div class="music-list" id="gallery-music-list">
+                </div>
+        </section>
+    </main>
+
+    <div id="video-player-screen" class="full-page">
+        <div class="video-container">
+            <video id="main-video" playsinline></video>
+            
+            <div id="video-controls" class="controls-overlay">
+                <div class="top-controls">
+                    <button class="icon-btn" id="close-player"><i class="fas fa-chevron-down"></i></button>
+                    <button class="icon-btn" id="lock-btn"><i class="fas fa-unlock"></i></button>
+                </div>
+
+                <div class="mid-controls">
+                    <i class="fas fa-backward-step" id="prev-vid"></i>
+                    <i class="fas fa-play" id="play-pause"></i>
+                    <i class="fas fa-forward-step" id="next-vid"></i>
+                </div>
+
+                <div class="bottom-controls">
+                    <span id="current-time">00:00</span>
+                    <input type="range" id="seek-bar" value="0">
+                    <span id="duration">00:00</span>
+                    <i class="fas fa-volume-up" id="mute-btn"></i>
+                    <i class="fas fa-expand" id="fullscreen-btn"></i>
+                </div>
+            </div>
+        </div>
+        <div class="suggested-videos">
+            <h3>More Videos</h3>
+            <div id="player-bottom-list"></div>
+        </div>
+    </div>
+
+    <div id="music-player-screen" class="full-page">
+        <header class="music-header">
+            <i class="fas fa-chevron-down" id="close-music"></i>
+            <p>Now Playing</p>
+            <i class="fas fa-ellipsis-v"></i>
+        </header>
+        <div class="album-art-container">
+            <img src="https://via.placeholder.com/300" id="album-art" alt="Music Art">
+            <div class="visualizer"></div>
+        </div>
+        <div class="song-info">
+            <h2 id="song-title">Song Name</h2>
+            <p id="artist-name">Artist Name</p>
+            <i class="fas fa-heart" id="fav-btn"></i>
+        </div>
+        <div class="music-controls">
+            <input type="range" id="music-seek" value="0">
+            <div class="time-info">
+                <span>1:24</span><span>3:48</span>
+            </div>
+            <div class="main-btns">
+                <i class="fas fa-shuffle"></i>
+                <i class="fas fa-step-backward"></i>
+                <div class="play-circle"><i class="fas fa-play"></i></div>
+                <i class="fas fa-step-forward"></i>
+                <i class="fas fa-repeat"></i>
+            </div>
+        </div>
+    </div>
+
+    <nav id="bottom-nav">
+        <div class="nav-item active" data-target="video-home">
+            <i class="fas fa-play-circle"></i>
+            <span>Videos</span>
+        </div>
+        <div class="nav-item" data-target="music-home">
+            <i class="fas fa-music"></i>
+            <span>Music</span>
+        </div>
+    </nav>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
