@@ -9,7 +9,6 @@
         :root { --main-red: #ff0033; --dark-bg: #000; --card-bg: #121212; }
         body { margin: 0; background: var(--dark-bg); color: white; font-family: sans-serif; overflow-x: hidden; }
 
-        /* Header Styles */
         .header { 
             padding: 20px; 
             display: flex; 
@@ -26,7 +25,6 @@
         
         .action-icons i { font-size: 20px; cursor: pointer; margin-left: 20px; }
         
-        /* Selection Mode Header */
         .selection-header {
             display: none;
             position: fixed;
@@ -36,7 +34,6 @@
             padding: 0 20px; box-sizing: border-box; z-index: 200;
         }
 
-        /* Video List Styling */
         .video-list { padding: 10px 15px; padding-bottom: 90px; }
         .video-card { 
             display: flex; gap: 15px; margin-bottom: 20px; 
@@ -44,9 +41,9 @@
         }
         .video-card.selected { background: rgba(255, 0, 51, 0.2); }
         
-        .thumb-container { position: relative; width: 150px; height: 85px; min-width: 150px; }
-        .thumb-container img, .thumb-container video { 
-            width: 100%; height: 100%; border-radius: 8px; object-fit: cover; background: #222;
+        .thumb-container { position: relative; width: 150px; height: 85px; min-width: 150px; background: #111; border-radius: 8px; overflow: hidden; }
+        .thumb-container video { 
+            width: 100%; height: 100%; object-fit: cover;
         }
         .duration { 
             position: absolute; bottom: 5px; right: 5px; 
@@ -54,7 +51,7 @@
         }
 
         .video-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-        .video-info h3 { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .video-info h3 { margin: 0; font-size: 14px; font-weight: 500; line-height: 1.2; color: #eee; }
         
         .select-dot {
             position: absolute; top: 10px; left: 10px; width: 20px; height: 20px;
@@ -62,7 +59,6 @@
         }
         .selected .select-dot { display: block; background: var(--main-red); }
 
-        /* Bottom Nav */
         .bottom-nav { 
             position: fixed; bottom: 0; width: 100%; height: 70px; 
             background: #080808; display: flex; justify-content: space-around; 
@@ -72,7 +68,6 @@
         .nav-item.active { color: var(--main-red); }
         .nav-item i { font-size: 22px; display: block; margin-bottom: 5px; }
 
-        /* Plus Button for Scanning */
         .scan-btn {
             position: fixed; bottom: 90px; right: 20px; 
             width: 55px; height: 55px; background: var(--main-red); 
@@ -104,8 +99,7 @@
         </div>
     </div>
 
-    <main class="video-list" id="video-grid">
-        </main>
+    <main class="video-list" id="video-grid"></main>
 
     <div class="scan-btn" onclick="triggerScan()">
         <i class="fas fa-plus"></i>
@@ -133,32 +127,44 @@
                 const grid = document.getElementById('video-grid');
                 
                 files.forEach(file => {
+                    const videoUrl = URL.createObjectURL(file);
                     const card = document.createElement('div');
                     card.className = 'video-card';
+                    
                     card.innerHTML = `
                         <div class="select-dot"></div>
                         <div class="thumb-container">
-                            <img src="https://picsum.photos/200/120?random=${Math.random()}">
-                            <span class="duration">04:20</span>
+                            <video src="${videoUrl}#t=0.5"></video>
+                            <span class="duration" id="dur-${file.lastModified}">...</span>
                         </div>
                         <div class="video-info">
                             <h3>${file.name}</h3>
                         </div>
                     `;
 
-                    // Long Press Event
+                    // Duration nikalne ke liye temporary video element
+                    const tempVideo = document.createElement('video');
+                    tempVideo.src = videoUrl;
+                    tempVideo.onloadedmetadata = () => {
+                        const d = tempVideo.duration;
+                        const m = Math.floor(d / 60);
+                        const s = Math.floor(d % 60);
+                        document.getElementById(`dur-${file.lastModified}`).innerText = 
+                            (m < 10 ? "0"+m : m) + ":" + (s < 10 ? "0"+s : s);
+                    };
+
                     let timer;
                     card.addEventListener('touchstart', () => {
                         timer = setTimeout(() => enterSelectionMode(card), 800);
                     });
                     card.addEventListener('touchend', () => clearTimeout(timer));
                     
-                    // Click Event - Link to Player
                     card.onclick = () => {
                         if(isSelectionMode) {
                             toggleSelect(card);
                         } else {
-                            window.location.href = "video_player.html?name=" + encodeURIComponent(file.name);
+                            // Video ka name aur asli link player page par bhej rahe hain
+                            window.location.href = `video_player.html?name=${encodeURIComponent(file.name)}&src=${encodeURIComponent(videoUrl)}`;
                         }
                     };
 
@@ -195,10 +201,7 @@
                 exitSelection();
             }
         }
-
-        function shareVideos() {
-            alert("Sharing selected videos...");
-        }
     </script>
 </body>
 </html>
+
