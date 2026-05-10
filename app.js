@@ -1,45 +1,87 @@
-// ZabPlay Logic - Real App Experience
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Navigation Logic
+    // 1. Navigation & Page Management
     const navItems = document.querySelectorAll('.nav-item');
     const pages = document.querySelectorAll('.page');
+    const videoPlayerScreen = document.getElementById('video-player-screen');
+    const musicPlayerScreen = document.getElementById('music-player-screen');
+    const mainVideo = document.getElementById('main-video');
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
-            const target = item.getAttribute('data-target');
+            const targetId = item.getAttribute('data-target');
             
-            // UI Update
+            // UI Switch
             navItems.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
 
-            // Page Switch
-            pages.forEach(p => p.classList.remove('active'));
-            document.getElementById(target).classList.add('active');
+            // Page Switch (Fixing Music Page Visibility)
+            pages.forEach(p => {
+                p.classList.remove('active');
+                p.style.display = 'none'; 
+            });
+
+            const activePage = document.getElementById(targetId);
+            activePage.classList.add('active');
+            activePage.style.display = 'block';
         });
     });
 
-    // 2. Video Player Logic
-    const mainVideo = document.getElementById('main-video');
-    const videoPlayerScreen = document.getElementById('video-player-screen');
+    // 2. Real Gallery Integration (Video/Music)
+    window.selectFromGallery = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'video/*, audio/*';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            const fileUrl = URL.createObjectURL(file);
+            
+            if (file.type.includes('video')) {
+                startVideoPlayer(fileUrl, file.name);
+            } else {
+                startMusicPlayer(fileUrl, file.name);
+            }
+        };
+        input.click();
+    };
+
+    function startVideoPlayer(src, name) {
+        mainVideo.src = src;
+        videoPlayerScreen.style.display = 'flex';
+        videoPlayerScreen.classList.add('active');
+        mainVideo.play();
+        
+        // Player के नीचे नाम अपडेट करना (Like your Photo)
+        document.getElementById('player-bottom-list').innerHTML = `
+            <div class="video-item" style="padding:15px; border-left: 4px solid #ff0033; background: #1a1a1a;">
+                <div class="video-info">
+                    <h3 style="color:#ff0033">Now Playing: ${name}</h3>
+                    <p style="color:gray; font-size:12px;">ZabPlay Premium Player</p>
+                </div>
+            </div>
+        `;
+        showControls();
+    }
+
+    // 3. Advanced Video Controls
     const controlsOverlay = document.getElementById('video-controls');
     const playPauseBtn = document.getElementById('play-pause');
     const muteBtn = document.getElementById('mute-btn');
     const lockBtn = document.getElementById('lock-btn');
-    
     let isLocked = false;
     let controlTimer;
 
-    // Gallery से वीडियो उठाने का फंक्शन (Simulated for Web)
-    // असल APK में यह आपके फोन की फाइल एक्सेस करेगा
-    window.openVideo = (src) => {
-        mainVideo.src = src;
-        videoPlayerScreen.classList.add('active');
-        mainVideo.play();
-        showControls();
+    const showControls = () => {
+        if (isLocked && !event.target.closest('#lock-btn')) return;
+        controlsOverlay.style.opacity = '1';
+        clearTimeout(controlTimer);
+        controlTimer = setTimeout(() => {
+            if (!mainVideo.paused) controlsOverlay.style.opacity = '0';
+        }, 3000);
     };
 
-    // Play/Pause
-    playPauseBtn.addEventListener('click', (e) => {
+    videoPlayerScreen.addEventListener('click', showControls);
+
+    playPauseBtn.onclick = (e) => {
         e.stopPropagation();
         if (isLocked) return;
         if (mainVideo.paused) {
@@ -49,72 +91,36 @@ document.addEventListener('DOMContentLoaded', () => {
             mainVideo.pause();
             playPauseBtn.className = 'fas fa-play';
         }
-    });
+    };
 
-    // Mute/Unmute (Baja Wala Icon)
-    muteBtn.addEventListener('click', (e) => {
+    muteBtn.onclick = (e) => {
         e.stopPropagation();
         mainVideo.muted = !mainVideo.muted;
         muteBtn.className = mainVideo.muted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
-    });
+    };
 
-    // Lock Screen Logic
-    lockBtn.addEventListener('click', (e) => {
+    lockBtn.onclick = (e) => {
         e.stopPropagation();
         isLocked = !isLocked;
         lockBtn.innerHTML = isLocked ? '<i class="fas fa-lock"></i>' : '<i class="fas fa-unlock"></i>';
-        if (isLocked) {
-            // सिर्फ लॉक बटन दिखेगा बाकी गायब
-            controlsOverlay.classList.add('locked-state');
-        } else {
-            controlsOverlay.classList.remove('locked-state');
-        }
-    });
-
-    // 3. Auto-Hide Controls (3 Seconds)
-    const showControls = () => {
-        controlsOverlay.style.opacity = '1';
-        clearTimeout(controlTimer);
-        if (!isLocked) {
-            controlTimer = setTimeout(() => {
-                controlsOverlay.style.opacity = '0';
-            }, 3000);
-        }
+        controlsOverlay.classList.toggle('locked-mode', isLocked);
     };
 
-    videoPlayerScreen.addEventListener('click', showControls);
-
-    // Close Player
-    document.getElementById('close-player').addEventListener('click', () => {
-        videoPlayerScreen.classList.remove('active');
-        mainVideo.pause();
-    });
-
-    // 4. Music Logic
-    const musicPlayerScreen = document.getElementById('music-player-screen');
-    
-    window.playMusic = () => {
+    // 4. Music Player Logic
+    function startMusicPlayer(src, name) {
+        musicPlayerScreen.style.display = 'flex';
         musicPlayerScreen.classList.add('active');
+        document.getElementById('song-title').innerText = name;
+        // यहाँ म्यूजिक प्ले करने का अलग ऑडियो टैग भी लगा सकते हैं
+    }
+
+    document.getElementById('close-player').onclick = () => {
+        videoPlayerScreen.style.display = 'none';
+        mainVideo.pause();
     };
 
-    document.getElementById('close-music').addEventListener('click', () => {
-        musicPlayerScreen.classList.remove('active');
-    });
-
-    // Demo Data: गैलरी जैसा दिखाने के लिए
-    const videoList = document.getElementById('gallery-video-list');
-    for(let i=1; i<=5; i++) {
-        videoList.innerHTML += `
-            <div class="video-item" onclick="openVideo('video${i}.mp4')">
-                <div class="thumb-container">
-                    <img src="https://picsum.photos/200/110?random=${i}">
-                    <span class="duration-tag">10:32</span>
-                </div>
-                <div class="video-info">
-                    <h3>ZabPlay Video Sample ${i}</h3>
-                    <p style="color:#b3b3b3; font-size:12px;">Beautiful Nature in 4K</p>
-                </div>
-            </div>
-        `;
-    }
+    document.getElementById('close-music').onclick = () => {
+        musicPlayerScreen.style.display = 'none';
+    };
 });
+
