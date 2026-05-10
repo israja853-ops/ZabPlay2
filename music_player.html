@@ -22,9 +22,9 @@
         }
         .dropdown button {
             background: none; border: none; color: white; padding: 12px 15px;
-            text-align: left; display: flex; align-items: center; gap: 10px; cursor: pointer;
+            text-align: left; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid #222;
         }
-        .dropdown button:hover { background: #333; }
+        .dropdown button:last-child { border: none; }
 
         /* Album Art Area */
         .player-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
@@ -36,14 +36,14 @@
 
         /* Song Info */
         .song-info { text-align: left; width: 85%; margin-bottom: 30px; }
-        .song-info h1 { margin: 0; font-size: 24px; font-weight: bold; }
+        .song-info h1 { margin: 0; font-size: 24px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .song-info p { margin: 5px 0; color: #888; font-size: 16px; }
 
         /* Progress Bar */
         .progress-container { width: 85%; margin-bottom: 30px; }
         .time-labels { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; color: #888; }
         .seek-bar { width: 100%; height: 4px; background: #333; border-radius: 10px; position: relative; cursor: pointer; }
-        .fill { height: 100%; background: var(--main-red); width: 0%; border-radius: 10px; position: relative; }
+        .fill { height: 0%; background: var(--main-red); width: 0%; border-radius: 10px; position: relative; pointer-events: none; }
         .fill::after { content: ''; position: absolute; right: -6px; top: -4px; width: 12px; height: 12px; background: var(--main-red); border-radius: 50%; }
 
         /* Controls */
@@ -56,7 +56,6 @@
         }
         .controls i.active { color: var(--main-red); }
 
-        /* Audio Element (Hidden) */
         audio { display: none; }
     </style>
 </head>
@@ -65,7 +64,7 @@
     <div class="header">
         <i class="fas fa-chevron-down" onclick="window.history.back()"></i>
         <span>Now Playing</span>
-        <i class="fas fa-ellipsis-v" onclick="toggleMenu()"></i>
+        <i class="fas fa-ellipsis-v" onclick="toggleMenu(event)"></i>
         
         <div class="dropdown" id="menu">
             <button onclick="shareSong()"><i class="fas fa-share-alt"></i> Share</button>
@@ -75,11 +74,11 @@
     </div>
 
     <div class="player-main">
-        <img src="https://picsum.photos/400" id="thumb" class="album-art" alt="Song Art">
+        <img src="https://picsum.photos/400/400?music" id="thumb" class="album-art" alt="Song Art">
         
         <div class="song-info">
-            <h1 id="title">Dreams</h1>
-            <p id="artist">Alan Walker</p>
+            <h1 id="title">Song Title</h1>
+            <p id="artist">ZabPlay Local Artist</p>
         </div>
 
         <div class="progress-container">
@@ -88,7 +87,7 @@
             </div>
             <div class="time-labels">
                 <span id="current">00:00</span>
-                <span id="total">03:48</span>
+                <span id="total">00:00</span>
             </div>
         </div>
 
@@ -103,7 +102,7 @@
         </div>
     </div>
 
-    <audio id="audioSource" src="sample_music.mp3"></audio>
+    <audio id="audioSource" src=""></audio>
 
     <script>
         const audio = document.getElementById('audioSource');
@@ -111,12 +110,20 @@
         const progressFill = document.getElementById('progressFill');
         const currentTimeEl = document.getElementById('current');
         const totalTimeEl = document.getElementById('total');
-        let isRepeating = false;
+        const titleEl = document.getElementById('title');
+        const thumbEl = document.getElementById('thumb');
 
-        // 1. Play/Pause Function
+        // URL से गाना का नाम लेना
+        const urlParams = new URLSearchParams(window.location.search);
+        const songName = urlParams.get('name');
+        if(songName) {
+            titleEl.innerText = songName.replace(/\.[^/.]+$/, "");
+            thumbEl.src = "https://picsum.photos/400/400?random=" + Math.random();
+        }
+
         function togglePlay() {
             if (audio.paused) {
-                audio.play();
+                audio.play().catch(() => alert("Please add a real audio source to play."));
                 playIcon.className = "fas fa-pause";
             } else {
                 audio.pause();
@@ -124,11 +131,12 @@
             }
         }
 
-        // 2. Update Progress Bar & Time
         audio.ontimeupdate = () => {
-            const perc = (audio.currentTime / audio.duration) * 100;
-            progressFill.style.width = perc + "%";
-            currentTimeEl.innerText = formatTime(audio.currentTime);
+            if(audio.duration) {
+                const perc = (audio.currentTime / audio.duration) * 100;
+                progressFill.style.width = perc + "%";
+                currentTimeEl.innerText = formatTime(audio.currentTime);
+            }
         };
 
         audio.onloadedmetadata = () => {
@@ -141,41 +149,33 @@
             return (m < 10 ? "0"+m : m) + ":" + (s < 10 ? "0"+s : s);
         }
 
-        // 3. Seek Function
         function seek(e) {
-            const rect = e.target.closest('.seek-bar').getBoundingClientRect();
+            const rect = e.currentTarget.getBoundingClientRect();
             const pos = (e.clientX - rect.left) / rect.width;
-            audio.currentTime = pos * audio.duration;
+            if(audio.duration) audio.currentTime = pos * audio.duration;
         }
 
-        // 4. Repeat (Single Song Loop)
         function toggleRepeat(el) {
-            isRepeating = !isRepeating;
-            audio.loop = isRepeating;
+            audio.loop = !audio.loop;
             el.classList.toggle('active');
-            if(isRepeating) alert("Loop Mode: ON (This song will play again and again)");
+            if(audio.loop) alert("Loop ON: This song will repeat.");
         }
 
-        // 5. Menu Toggle (3 Dots)
-        function toggleMenu() {
+        function toggleMenu(e) {
+            e.stopPropagation();
             const menu = document.getElementById('menu');
             menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
         }
 
-        // 6. Action Functions
-        function shareSong() { alert("Sharing this MP3 file..."); toggleMenu(); }
-        function deleteSong() { if(confirm("Delete this song forever?")) window.history.back(); }
-        function openMixer() { alert("Opening Audio Mixer/Equalizer..."); toggleMenu(); }
-        
-        function nextSong() { alert("Loading next song from your list..."); }
-        function prevSong() { alert("Loading previous song..."); }
+        function shareSong() { alert("Sharing: " + titleEl.innerText); }
+        function deleteSong() { if(confirm("Delete this song?")) window.history.back(); }
+        function openMixer() { alert("Mixer opening..."); }
+        function nextSong() { alert("Next song..."); }
+        function prevSong() { alert("Previous song..."); }
         function toggleBtn(el) { el.classList.toggle('active'); }
 
-        // Close menu on click outside
-        window.onclick = function(event) {
-            if (!event.target.matches('.fa-ellipsis-v')) {
-                document.getElementById('menu').style.display = "none";
-            }
+        window.onclick = function() {
+            document.getElementById('menu').style.display = "none";
         }
     </script>
 </body>
