@@ -16,8 +16,9 @@
         /* Overlays */
         .overlay { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.4); display: flex; flex-direction: column; 
+            background: rgba(0,0,0,0.5); display: flex; flex-direction: column; 
             justify-content: space-between; transition: opacity 0.3s; opacity: 1;
+            z-index: 10;
         }
         .overlay.hidden { opacity: 0; pointer-events: none; }
 
@@ -28,60 +29,63 @@
         /* Mid Controls */
         .mid-controls { display: flex; justify-content: center; align-items: center; gap: 50px; }
         .mid-controls i { font-size: 35px; cursor: pointer; }
-        #play-pause { font-size: 50px; }
+        #play-pause { font-size: 50px; width: 60px; text-align: center; }
 
         /* Bottom Progress Bar */
-        .bottom-bar { padding: 0 15px 10px; }
-        .time-info { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+        .bottom-bar { padding: 0 15px 15px; }
+        .time-info { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: #ddd; }
         .seek-bar { 
-            width: 100%; height: 5px; background: rgba(255,255,255,0.3); 
+            width: 100%; height: 5px; background: rgba(255,255,255,0.2); 
             border-radius: 5px; position: relative; cursor: pointer; 
         }
-        .progress { height: 100%; background: var(--main-red); width: 0%; border-radius: 5px; position: relative; }
+        .progress { height: 100%; background: var(--main-red); width: 0%; border-radius: 5px; position: relative; pointer-events: none; }
         .progress::after { 
-            content: ''; position: absolute; right: -5px; top: -4px; 
-            width: 12px; height: 12px; background: var(--main-red); border-radius: 50%; 
+            content: ''; position: absolute; right: -6px; top: -4px; 
+            width: 14px; height: 14px; background: var(--main-red); border-radius: 50%; 
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
 
         /* Title Section */
-        .video-details { padding: 15px; border-bottom: 1px solid #222; }
-        .video-details h2 { margin: 0; font-size: 18px; font-weight: 500; }
+        .video-details { padding: 15px; border-bottom: 1px solid #222; background: #050505; }
+        .video-details h2 { margin: 0; font-size: 18px; font-weight: 500; color: #fff; }
 
         /* Suggested List */
-        .next-videos { height: calc(100vh - 350px); overflow-y: auto; padding: 10px; }
-        .video-item { display: flex; gap: 12px; margin-bottom: 15px; position: relative; }
-        .video-item img { width: 120px; height: 70px; border-radius: 8px; object-fit: cover; }
+        .next-videos { height: calc(100vh - 360px); overflow-y: auto; padding: 15px; padding-bottom: 80px; }
+        .video-item { display: flex; gap: 12px; margin-bottom: 18px; position: relative; }
+        .video-item img { width: 130px; height: 75px; border-radius: 8px; object-fit: cover; background: #111; }
         .v-info { flex: 1; }
-        .v-info h4 { margin: 0; font-size: 14px; line-height: 1.3; }
-        .v-info i { position: absolute; right: 5px; top: 5px; color: #888; }
+        .v-info h4 { margin: 0; font-size: 14px; line-height: 1.3; font-weight: 500; }
+        .v-info p { margin: 5px 0 0; font-size: 11px; color: #888; }
 
         /* Lock Screen */
         .locked-overlay { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             z-index: 1000; display: none; align-items: center; justify-content: center;
+            background: transparent;
         }
-        .locked-overlay i { font-size: 40px; color: white; opacity: 0.5; }
+        .locked-overlay i { font-size: 50px; color: white; opacity: 0.6; padding: 20px; }
 
         /* Bottom Nav */
         .bottom-nav { 
-            position: fixed; bottom: 0; width: 100%; height: 60px; 
+            position: fixed; bottom: 0; width: 100%; height: 70px; 
             background: #080808; display: flex; justify-content: space-around; 
-            align-items: center; border-top: 1px solid #222; 
+            align-items: center; border-top: 1px solid #222; z-index: 100;
         }
-        .nav-item { color: #555; text-align: center; font-size: 10px; }
+        .nav-item { color: #555; text-align: center; font-size: 11px; text-decoration: none; }
         .nav-item.active { color: var(--main-red); }
+        .nav-item i { font-size: 22px; display: block; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
     <div class="player-container" id="container" onclick="handleContainerClick()">
-        <video id="mainVideo" src="sample_video.mp4" poster="https://picsum.photos/800/450"></video>
+        <video id="mainVideo" src="" poster="https://picsum.photos/800/450?nature"></video>
         
         <div class="overlay" id="mainControls">
             <div class="top-bar">
                 <i class="fas fa-chevron-down" onclick="window.history.back()"></i>
                 <div style="display:flex; gap:25px;">
-                    <i class="fas fa-music" onclick="toggleMP3()" title="Convert to MP3"></i>
+                    <i class="fas fa-music" id="mp3Btn" onclick="toggleMP3(event)" title="MP3 Mode"></i>
                     <i class="fas fa-lock" id="lockBtn" onclick="toggleLock(event)"></i>
                     <i class="fas fa-ellipsis-v"></i>
                 </div>
@@ -110,15 +114,15 @@
     </div>
 
     <div class="video-details">
-        <h2 id="videoTitle">Beautiful Nature in 4K - ZabPlay Special</h2>
+        <h2 id="videoTitle">Now Playing...</h2>
     </div>
 
     <div class="next-videos" id="suggestionList">
         </div>
 
     <nav class="bottom-nav">
-        <div class="nav-item active"><i class="fas fa-play-circle"></i><span>Videos</span></div>
-        <div class="nav-item"><i class="fas fa-music"></i><span>Music</span></div>
+        <a href="video_home.html" class="nav-item active"><i class="fas fa-play-circle"></i><span>Videos</span></a>
+        <a href="music_home.html" class="nav-item"><i class="fas fa-music"></i><span>Music</span></a>
     </nav>
 
     <script>
@@ -126,14 +130,19 @@
         const controls = document.getElementById('mainControls');
         const playBtn = document.getElementById('play-pause');
         const progressBar = document.getElementById('progressBar');
+        const videoTitle = document.getElementById('videoTitle');
         let isLocked = false;
         let hideTimeout;
 
-        // 1. Play/Pause Toggle
+        // URL से वीडियो का नाम निकालें
+        const params = new URLSearchParams(window.location.search);
+        const vName = params.get('name');
+        if(vName) videoTitle.innerText = vName;
+
         function togglePlay(e) {
             if(e) e.stopPropagation();
             if (video.paused) {
-                video.play();
+                video.play().catch(() => alert("Select a real video file from Home."));
                 playBtn.className = "fas fa-pause";
             } else {
                 video.pause();
@@ -142,31 +151,31 @@
             resetTimer();
         }
 
-        // 2. Mute on Tap & Show/Hide Controls
         function handleContainerClick() {
             if(isLocked) return;
             if (controls.classList.contains('hidden')) {
                 controls.classList.remove('hidden');
                 resetTimer();
             } else {
-                video.muted = !video.muted; // टैप पर म्यूट/अनम्यूट
-                resetTimer();
+                controls.classList.add('hidden');
             }
         }
 
-        // 3. 3-Second Auto Hide
         function resetTimer() {
             clearTimeout(hideTimeout);
-            hideTimeout = setTimeout(() => {
-                if(!video.paused) controls.classList.add('hidden');
-            }, 3000);
+            if(!video.paused) {
+                hideTimeout = setTimeout(() => {
+                    controls.classList.add('hidden');
+                }, 3000);
+            }
         }
 
-        // 4. Progress Bar & Time Update
         video.ontimeupdate = () => {
-            const perc = (video.currentTime / video.duration) * 100;
-            progressBar.style.width = perc + "%";
-            document.getElementById('currentTime').innerText = formatTime(video.currentTime);
+            if(video.duration) {
+                const perc = (video.currentTime / video.duration) * 100;
+                progressBar.style.width = perc + "%";
+                document.getElementById('currentTime').innerText = formatTime(video.currentTime);
+            }
         };
 
         video.onloadedmetadata = () => {
@@ -179,65 +188,56 @@
             return (m < 10 ? "0"+m : m) + ":" + (s < 10 ? "0"+s : s);
         }
 
-        // 5. Seek on Click
         function seek(e) {
             e.stopPropagation();
-            const rect = e.target.getBoundingClientRect();
+            const rect = e.currentTarget.getBoundingClientRect();
             const pos = (e.clientX - rect.left) / rect.width;
-            video.currentTime = pos * video.duration;
+            if(video.duration) video.currentTime = pos * video.duration;
         }
 
-        // 6. Lock Screen Logic
         function toggleLock(e) {
             e.stopPropagation();
             isLocked = true;
-            controls.style.display = 'none';
+            controls.classList.add('hidden');
             document.getElementById('lockedUI').style.display = 'flex';
         }
 
         function unlock(e) {
             e.stopPropagation();
             isLocked = false;
-            controls.style.display = 'flex';
             document.getElementById('lockedUI').style.display = 'none';
+            controls.classList.remove('hidden');
             resetTimer();
         }
 
-        // 7. Swipe Gesture (1 Minute Forward/Backward)
-        let touchStart = 0;
-        document.getElementById('container').ontouchstart = (e) => touchStart = e.touches[0].clientX;
-        document.getElementById('container').ontouchend = (e) => {
-            if(isLocked) return;
-            let touchEnd = e.changedTouches[0].clientX;
-            if (touchStart - touchEnd > 100) video.currentTime -= 60; // Swipe Left
-            if (touchEnd - touchStart > 100) video.currentTime += 60; // Swipe Right
-        };
+        function forward(e) { e.stopPropagation(); video.currentTime += 60; }
+        function rewind(e) { e.stopPropagation(); video.currentTime -= 60; }
 
-        // 8. MP3 Mode
-        function toggleMP3() {
-            alert("MP3 Mode Enabled: Screen will stay black, Audio will play.");
-            video.style.opacity = video.style.opacity === "0" ? "1" : "0";
+        function toggleMP3(e) {
+            e.stopPropagation();
+            const btn = document.getElementById('mp3Btn');
+            if(video.style.opacity === "0") {
+                video.style.opacity = "1";
+                btn.style.color = "white";
+            } else {
+                video.style.opacity = "0";
+                btn.style.color = "#ff0033";
+                alert("MP3 Mode: Video hidden, Audio only.");
+            }
         }
 
-        // 9. Load Suggestion List
+        // Suggested List load
         const list = document.getElementById('suggestionList');
-        for(let i=1; i<=5; i++) {
+        for(let i=1; i<=6; i++) {
             list.innerHTML += `
-                <div class="video-item" id="v-${i}">
-                    <img src="https://picsum.photos/200/110?random=${i}">
+                <div class="video-item">
+                    <img src="https://picsum.photos/200/120?random=${i+10}">
                     <div class="v-info">
-                        <h4>Recommended Video Part ${i}</h4>
-                        <p style="font-size:11px; color:gray; margin-top:5px;">2.5M views • 10:32</p>
+                        <h4>Recommended Video Clip #${i}</h4>
+                        <p>ZabPlay Media • 1.2M views</p>
                     </div>
-                    <i class="fas fa-ellipsis-v" onclick="showMenu(${i})"></i>
                 </div>
             `;
-        }
-
-        function showMenu(id) {
-            const action = prompt("Type 'delete' to remove or 'share' to share:");
-            if(action === 'delete') document.getElementById('v-'+id).remove();
-            if(action === 'share') alert("Sharing video link...");
         }
     </script>
 </body>
